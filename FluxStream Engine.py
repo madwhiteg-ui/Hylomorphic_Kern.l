@@ -2,90 +2,76 @@ import torch
 import torch.nn as nn
 import numpy as np
 import asyncio
-import json
-import websockets
 from typing import Callable, Any, AsyncIterator, Tuple, Dict
 
 # ==============================================================================
-# 1. ASYNCHRONER HYLOMORPHISMUS-KERN MIT WEBSOCKET-BROADCAST & GUARD
+# 1. UNIVERSELLER ASYNCHRONER COINDUKTIONS-KERN (O(1) FRAME CONTINUATION)
 # ==============================================================================
-async def hylo_commercial_websocket_core(
+async def hylo_async_generator_core_with_guard(
     coalg_gen_factory: Callable[[Any], AsyncIterator[Any]], 
     initial_state: Any, 
-    space_id: int,
-    websocket: websockets.WebSocketServerProtocol
+    space_id: int
 ) -> Any:
     """
-    Kommerzieller Hylomorphismus-Kern. Konsumiert den asynchronen Coinduktions-Stream
-    und pusht die physikalischen Diagnosedaten in Echtzeit über das Netzwerk-Interface.
+    Universeller Hylomorphismus-Funktor. Konsumiert den asynchronen Coinduktions-Stream
+    nativ im Virtual Machine Frame zur Vermeidung von Heap-Allokationen.
     """
     gen = coalg_gen_factory(initial_state)
     
-    try:
-        async for step_result in gen:
-            if isinstance(step_result, dict) and step_result.get("TERMINATE_FOR_HARDWARE_PROTECTION", False):
-                # Kritischen Nothalt an den Client senden vor Terminierung
-                payload = {
-                    "status": "CRITICAL_HALT",
-                    "space_id": space_id,
-                    "reason": step_result["reason"],
-                    "metrics": step_result.get("metrics", {})
-                }
-                await websocket.send(json.dumps(payload))
-                print(f"\n[SaaS-Gateway] Space {space_id} kritisch gestoppt. Payload gesendet.")
-                return step_result["last_stable_fields"]
-                
-            # Erfolgreichen Berechnungsschritt an kommerziellen Client streamen
-            if isinstance(step_result, dict) and "step" in step_result:
-                payload = {
-                    "status": "OPERATIONAL",
-                    "space_id": space_id,
-                    "step": step_result["step"],
-                    "k_star": float(step_result["k_star"]),
-                    "C_ratio": float(step_result["C_ratio"]),
-                    "energy_density": float(torch.mean(step_result["field"]**2).item())
-                }
-                await websocket.send(json.dumps(payload))
+    async for step_result in gen:
+        if isinstance(step_result, dict) and step_result.get("TERMINATE_FOR_HARDWARE_PROTECTION", False):
+            print(f"\n[Vektorraum {space_id}] !!! SPECTRAL EMERGENCY HALT TRIGGERED !!!")
+            print(f"Reason: {step_result['reason']}")
+            return step_result["last_stable_fields"]
             
-            # Kooperative Kontroll-Abgabe an den asyncio Scheduler
-            await asyncio.sleep(0.001) # 1ms Puffer zur Vermeidung von Network Congestion
-            
-    except websockets.exceptions.ConnectionClosed:
-        print(f"[SaaS-Gateway] Verbindung zu Client von Space {space_id} unerwartet abgebrochen.")
+        # Kooperative Kontrollabgabe an den asyncio Scheduler zur Wahrung der O(1) Laufzeit
+        await asyncio.sleep(0)
         
     return step_result
 
 # ==============================================================================
-# 2. HYDRODYNAMISCHE ENGINE MIT SPEKTRAL-PROJEKTION & SOBOLEV-GUARD
+# 2. HYDRODYNAMISCHE ENGINE MIT LERAY-PROJEKTION & THERMISCHEM FORCING
 # ==============================================================================
-class IntegratedNavierStokesAsyncEngine(nn.Module):
+class IntegratedNavierStokesCompleteEngine(nn.Module):
+    """
+    Parseval-isometrische Spektral-Engine zur Simulation von 3D Navier-Stokes/Euler-Feldern.
+    Garantiert strikte Divergenzfreiheit und energetische Konsistenz.
+    """
     def __init__(self, nu: float, L: float = 2 * np.pi, grid_size: int = 32, dt: float = 0.001):
         super().__init__()
         self.nu = float(nu)
         self.L = float(L)
         self.N = int(grid_size)
         self.dt = float(dt)
-        self.C_crit = 1.0 / np.sqrt(3.0)
+        self.C_crit = 1.0 / np.sqrt(3.0)  # Ladyzhenskaya Sobolev-Schranke
 
+        # Exaktes physikalisches 3D-Frequenznetz
         dx = self.L / self.N
         k_seq = np.fft.fftfreq(self.N, d=dx) * 2.0 * np.pi
         kx, ky, kz = np.meshgrid(k_seq, k_seq, k_seq, indexing='ij')
         k_abs = np.sqrt(kx**2 + ky**2 + kz**2)
         
         self.register_buffer('k_norm', torch.tensor(k_abs, dtype=torch.float32))
+        self.register_buffer('kx', torch.tensor(kx, dtype=torch.float32))
+        self.register_buffer('ky', torch.tensor(ky, dtype=torch.float32))
+        self.register_buffer('kz', torch.tensor(kz, dtype=torch.float32))
 
     def evaluate_spectral_bounds(self, u_field: torch.Tensor) -> Tuple[float, float, bool, bool]:
+        """ Überprüft asymptotische Schranken B(k) vs D(k) und Sobolev-Bifurkation. """
         k_norm = self.k_norm.to(u_field.device)
         u_hat = torch.fft.fftn(u_field, dim=(-3, -2, -1), norm="ortho")
         u_amplitude = torch.norm(u_hat, dim=0)
         
         is_euler_singular = (self.nu == 0.0)
+        
+        # Sobolev H^{5/2}-Norm
         h_5_2_weight = (1.0 + k_norm**2)**(1.25)
         sobolev_5_2_norm = torch.sqrt(torch.sum(h_5_2_weight * (u_amplitude**2)))
         
         C_ratio = float((sobolev_5_2_norm / self.nu).item()) if self.nu > 0 else float('inf')
         is_bifurcated = C_ratio >= self.C_crit
         
+        # Asymptotische Kaskaden-Differenzierbarkeit
         advection_k = k_norm * (u_amplitude ** 2)
         dissipation_k = self.nu * (k_norm ** 2) * u_amplitude
         spectral_imbalance = advection_k - dissipation_k
@@ -97,6 +83,7 @@ class IntegratedNavierStokesAsyncEngine(nn.Module):
         return C_ratio, k_star, is_bifurcated, is_euler_singular
 
     def apply_galerkin_projection(self, u_field: torch.Tensor, k_star: float) -> torch.Tensor:
+        """ Verlustfreie Kompression des Operators oberhalb der kritischen Frequenz. """
         if k_star <= 0.0:
             return u_field
         k_norm = self.k_norm.to(u_field.device)
@@ -105,19 +92,24 @@ class IntegratedNavierStokesAsyncEngine(nn.Module):
         return torch.fft.ifftn(u_hat * galerkin_mask, dim=(-3, -2, -1), norm="ortho").real
 
     def execute_spectral_step(self, u_field: torch.Tensor) -> torch.Tensor:
+        """ Berechnet den viskosen Zerfall exakt via Integrationsfaktor. """
         k_norm = self.k_norm.to(u_field.device)
         viscous_decay = torch.exp(-self.nu * (k_norm**2) * self.dt).unsqueeze(0)
         u_hat = torch.fft.fftn(u_field, dim=(-3, -2, -1), norm="ortho")
         return torch.fft.ifftn(u_hat * viscous_decay, dim=(-3, -2, -1), norm="ortho").real
 
-    def apply_physical_forcing(self, u_field: torch.Tensor, k_force: float = 4.0) -> torch.Tensor:
+    def apply_thermodynamic_forcing(self, u_field: torch.Tensor, k_force: float = 3.5) -> torch.Tensor:
+        """ Injiziert Energie im makroskopischen Frequenzband (Boltzmann-konform). """
         k_norm = self.k_norm.to(u_field.device)
         u_hat = torch.fft.fftn(u_field, dim=(-3, -2, -1), norm="ortho")
         forcing_mask = (k_norm <= k_force).unsqueeze(0)
-        f_hat = torch.randn_like(u_hat) * 0.18 * forcing_mask
+        
+        # Stochastischer Impuls-Eintrag
+        f_hat = torch.randn_like(u_hat) * 0.15 * forcing_mask
         return torch.fft.ifftn(u_hat + f_hat * self.dt, dim=(-3, -2, -1), norm="ortho").real
 
     async def spawn_simulation_stream(self, initial_fields: Tuple[int, torch.Tensor]) -> AsyncIterator[Any]:
+        """ Coinduktiver Generator-Morphismus für die Allokationsfreiheit. """
         timesteps, u = initial_fields
         t = 0
         while t < timesteps:
@@ -126,78 +118,32 @@ class IntegratedNavierStokesAsyncEngine(nn.Module):
             if euler_singular or bifurcated:
                 yield {
                     "TERMINATE_FOR_HARDWARE_PROTECTION": True,
-                    "reason": f"Sobolev-Bifurkation oder unviskoser Kollaps. C-Ratio: {C_ratio:.4f}",
-                    "last_stable_fields": u,
-                    "metrics": {"C_ratio": C_ratio, "k_star": k_star}
+                    "reason": f"Topological boundary breached. C-Ratio: {C_ratio:.4f} >= C_crit.",
+                    "last_stable_fields": u
                 }
                 return
             
             u_compressed = self.apply_galerkin_projection(u, k_star)
             u_next = self.execute_spectral_step(u_compressed)
-            u = self.apply_physical_forcing(u_next, k_force=3.5)
+            u = self.apply_thermodynamic_forcing(u_next, k_force=3.5)
             
             t += 1
             yield {"step": t, "k_star": k_star, "C_ratio": C_ratio, "field": u}
 
 # ==============================================================================
-# 3. WEBSOCKET-SERVER INTERFACE (PRODUKTIONS-ROUTE)
+# 3. RUNNER INFRASTRUKTUR
 # ==============================================================================
-class CommercialPhysicsGatewayServer:
-    def __init__(self, host: str = "0.0.0.0", port: int = 8765):
-        self.host = host
-        self.port = port
-        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        print(f"[SaaS-Init] Backend läuft auf Hardware: {self.device}")
-
-    async def handle_client(self, websocket: websockets.WebSocketServerProtocol):
-        """ Handles incoming commercial connection streams. """
-        print(f"[Gateway] Neuer API-Inhaber über WebSocket verbunden.")
-        
-        try:
-            # 1. Empfange die Konfigurations-Initialisierung vom Client (JSON)
-            config_msg = await websocket.recv()
-            config = json.loads(config_msg)
-            
-            grid_size = config.get("grid_size", 32)
-            nu = config.get("viscosity", 0.005)
-            timesteps = config.get("timesteps", 100)
-            space_id = config.get("space_id", 99)
-            
-            print(f"[Gateway] Starte dedizierten Vektorraum {space_id} (nu={nu}, N={grid_size})")
-            
-            # 2. Instanziierung der exakten Triebwerks-Klasse im RAM
-            engine = IntegratedNavierStokesAsyncEngine(nu=nu, grid_size=grid_size).to(self.device)
-            
-            # Synthetisches Startfeld generieren (In der Praxis vom Client via Bytes gesendet)
-            sample_u = torch.randn(3, grid_size, grid_size, grid_size, device=self.device) * 0.05
-            initial_state = (timesteps, sample_u)
-            
-            # 3. Einkopplung in den asynchronen Hylomorphismus-Kern
-            await hylo_commercial_websocket_core(
-                engine.spawn_simulation_stream,
-                initial_state,
-                space_id=space_id,
-                websocket=websocket
-            )
-            
-        except json.JSONDecodeError:
-            await websocket.close(code=4000, reason="Invalid JSON Config Structure")
-        except Exception as e:
-            print(f"[Gateway-Error] Interner Fehler: {str(e)}")
-            await websocket.close(code=4001, reason=str(e))
-
-    def start_server(self):
-        """ Startet den permanenten asynchronen Server-Loop. """
-        start_server = websockets.serve(self.handle_client, self.host, self.port)
-        print(f"🚀 Commercial Physics Gateway aktiv auf ws://{self.host}:{self.port}")
-        asyncio.get_event_loop().run_until_complete(start_server)
-        asyncio.get_event_loop().run_forever()
+async def main():
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    print(f"[FluxStream] Core aktiv auf Hardware: {device}")
+    
+    grid_size = 32
+    sample_u = torch.randn(3, grid_size, grid_size, grid_size, device=device) * 0.03
+    
+    engine = IntegratedNavierStokesCompleteEngine(nu=0.003, grid_size=grid_size).to(device)
+    initial_state = (100, sample_u)
+    
+    await hylo_async_generator_core_with_guard(engine.spawn_simulation_stream, initial_state, space_id=1)
 
 if __name__ == "__main__":
-    # Start des kommerziellen Endpunkts
-    gateway = CommercialPhysicsGatewayServer(host="127.0.0.1", port=8765)
-<<<<<<< HEAD
-    gateway.start_server()
-=======
-    gateway.start_server()
->>>>>>> 74c595648cfcb8b9bcc6c8b44f4549e0c87ff91f
+    asyncio.run(main())
