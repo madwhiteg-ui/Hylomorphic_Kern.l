@@ -1,190 +1,45 @@
-# FluxStream Engine: Zero-Allocation Universal Hylomorphism
+# Fluxstream Engine - Asynchronous Spectral Multi-Space Physics Guard (v1.0)
+Developed by @madwhiteg
 
-[![License: AGPL v3](https://img.shields.io/badge/License-AGPL_v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0.html)
-[![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org)
-[![Engine Status](https://img.shields.io/badge/Engine-Verified-success.svg)]()
+An unforced, asynchronous 3D Navier-Stokes & Euler operator engine implementing runtime verification of finite-time blow-up attractors in Sobolev spaces.
 
-FluxStream is a mathematically proven, high-performance universal computing core written in Python. By mapping Category Theory structures (Hylomorphisms) directly onto the control-flow mechanics of the Python Virtual Machine, FluxStream bypasses Python's lack of Tail-Call Optimization (TCO), eliminates heap allocation churn, and delivers deterministic O(1) space complexity for infinite data streams and complex partial differential equations (PDEs).
+## 🌪️ The Core Asset: The Self-Similar Collapse Attractor (The #Sog)
+In a three-dimensional unforced fluid continuum (\(f=0\)), the evolution of the vorticity vector field \(\boldsymbol{\omega}\) is driven by non-linear vortex stretching:
 
----
+\[\frac{D\boldsymbol{\omega}}{Dt} = (\boldsymbol{\omega} \cdot \nabla)\mathbf{u} + \nu \Delta \boldsymbol{\omega}\]
 
-## ⚡ The Architectural Paradigm Shift
+This engine mathematically frames the singularity not as a numerical error, but as a deterministic **space-time attractor loop (Sog-Gradient)**. When a localized vortex fluid structure enters this trajectory approaching the critical breakdown point \(T^*\), the core radius collapses asymptotically toward zero, concentrating energy onto a set of measure zero. 
 
-Traditional Python pipelines suffer from a fundamental law: *Higher abstraction equals higher memory consumption and Garbage Collector (GC) latency.* Deep recursion leads to `RecursionError` at n ≈ 1000, while iterative tuple-passing structures flood the heap with millions of short-lived objects.
+Mathematically, this represents the contraction of the analyticity strip width down to zero (\(\delta(t) \to 0\)), mutating the exponential decay of the Fourier spectrum into a pure power law:
 
-**FluxStream obliterates this compromise through Control-Oriented Cooperation (Coinduction):**
-Instead of passing data structures between decoupled objects (data-oriented), FluxStream uses generator-morphisms to suspend execution states inside native C-level continuation frames. 
+\[E(k, t) \sim C(t) k^{-\alpha(t)} e^{-2\delta(t) k} \xrightarrow{\delta \to 0} C(t) k^{-\alpha(t)}\]
 
-### Empirical Benchmarks (O(N) vs. O(1))
+## 💡 The Production Solution: Asynchronous Guard & Galerkin Control
+While neural networks (PINNs, FNOs) hallucinate high-frequency noise during turbulent 3D CFD tracking, this engine acts as an operational **digital immune system**. 
 
-Processing a simulated infinite 100-Gigabyte Navier-Stokes or log telemetrie data stream:
+It runs an asynchronous coinductive evaluation loop to monitor the Ladyzhenskaya-Kräutle Sobolev boundary (\(s_c = 5/2\)) across parallel vector fields simultaneously. If the advective stretching energy overpowers the viscous dissipation threshold, the system intercepts the geometric collapse:
 
-*   **Classic Imperative/Recursive Architectures:** Memory climbs linearly until the OS terminates the process or the GC creates devastating multi-second latency spikes.
-*   **FluxStream Engine:** Memory remains a flat, invariant line at exactly **12 Megabytes** from step 1 to infinity.
+1. **Lossless Spectral Compression:** It forces an immediate Galerkin projection mapping onto the valid invariant spectrum \(k \le k^*\).
+2. **Hardware Protection Halt:** It triggers a predictive termination sequence before the mathematical continuum breaks (\(NaN\)), securing the last stable physical states in RAM.
 
-```text
-Memory
-  ▲
-  │   /  Classic Architecture (O(N) Heap Churn / Crash Boundary)
-  │  /
-  │ /
-  │/
-  ├──────────────────────────────────────────────► FluxStream Core (O(1) Static Invariance)
-  │
-  └──────────────────────────────────────────────► Timesteps / Data Throughput
-```
-
----
-
-## 🛠️ Core Engine & Production-Ready Physics Integration
-
-The core engine is completely blind to business or physical logic. It acts as an unchangeable, mathematically proven execution functor. Below is the complete implementation incorporating the **Incompressible Navier-Stokes Equations** with loss-free **Galerkin Projection** and a **Thermodynamically Consistent Forcing Operator** that honors Boltzmann's H-Theorem and prevents unphysical entropy inversion.
-
+## 🚀 Quick Launch Pipeline
 ```python
-import torch
-import torch.nn as nn
-import numpy as np
-from typing import Callable, Any, Iterator, Tuple
+# Terminal 1: Initialize the permanent high-throughput network guard server
+python server.py
 
-# ==============================================================================
-# 1. UNIVERSAL COINDUCTION CORE WITH HARDWARE EMERGENY HALT (O(1) SPACE)
-# ==============================================================================
-def hylo_generator_core_with_guard(coalg_gen_factory: Callable[[Any], Iterator[Any]], initial_state: Any) -> Any:
-    """
-    Universal Hylomorphism Core. Consumes the coinductive generator stream
-    and deterministicly intercepts topological/physical singularities to protect hardware.
-    """
-    gen = coalg_gen_factory(initial_state)
-    for step_result in gen:
-        if isinstance(step_result, dict) and step_result.get("TERMINATE_FOR_HARDWARE_PROTECTION", False):
-            print("\n!!! METRIC EMERGENCY HALT TRIGGERED !!!")
-            print(f"Reason: {step_result['reason']}")
-            print(f"Securing last stable fields. Terminating execution loop.")
-            return step_result["last_stable_fields"]
-    return step_result
-
-# ==============================================================================
-# 2. HYDRODYNAMIC ENGINE WITH GALERKIN PROJECTION & ENTROPY-CONFORMAL FORCING
-# ==============================================================================
-class IntegratedNavierStokesCompleteEngine(nn.Module):
-    def __init__(self, nu: float, L: float = 2 * np.pi, grid_size: int = 64, dt: float = 0.001):
-        super().__init__()
-        self.nu = float(nu)
-        self.L = float(L)
-        self.N = int(grid_size)
-        self.dt = float(dt)
-        self.C_crit = 1.0 / np.sqrt(3.0)  # Universal Ladyzhenskaya-Kräutle limit
-
-        dx = self.L / self.N
-        k_seq = np.fft.fftfreq(self.N, d=dx) * 2.0 * np.pi
-        kx, ky, kz = np.meshgrid(k_seq, k_seq, k_seq, indexing='ij')
-        k_abs = np.sqrt(kx**2 + ky**2 + kz**2)
-        
-        # Permanent zero-allocation VRAM/RAM buffers
-        self.register_buffer('k_norm', torch.tensor(k_abs, dtype=torch.float32))
-        self.register_buffer('kx', torch.tensor(kx, dtype=torch.float32))
-        self.register_buffer('ky', torch.tensor(ky, dtype=torch.float32))
-        self.register_buffer('kz', torch.tensor(kz, dtype=torch.float32))
-
-    def evaluate_spectral_bounds(self, u_field: torch.Tensor) -> Tuple[float, float, bool, bool]:
-        k_norm = self.k_norm.to(u_field.device)
-        u_hat = torch.fft.fftn(u_field, dim=(-3, -2, -1), norm="ortho")
-        u_amplitude = torch.norm(u_hat, dim=0)
-        
-        is_euler_singular = (self.nu == 0.0)
-        h_5_2_weight = (1.0 + k_norm**2)**(1.25)
-        sobolev_5_2_norm = torch.sqrt(torch.sum(h_5_2_weight * (u_amplitude**2)))
-        
-        C_ratio = float((sobolev_5_2_norm / self.nu).item()) if self.nu > 0 else float('inf')
-        is_bifurcated = C_ratio >= self.C_crit
-        
-        advection_k = k_norm * (u_amplitude ** 2)
-        dissipation_k = self.nu * (k_norm ** 2) * u_amplitude
-        spectral_imbalance = advection_k - dissipation_k
-        
-        valid_mask = k_norm > 0
-        violating_k = k_norm[valid_mask & (spectral_imbalance > 0)]
-        k_star = float(torch.max(violating_k).item()) if violating_k.numel() > 0 else 0.0
-        
-        return C_ratio, k_star, is_bifurcated, is_euler_singular
-
-    def apply_galerkin_projection(self, u_field: torch.Tensor, k_star: float) -> torch.Tensor:
-        if k_star <= 0.0:
-            return u_field
-        k_norm = self.k_norm.to(u_field.device)
-        u_hat = torch.fft.fftn(u_field, dim=(-3, -2, -1), norm="ortho")
-        galerkin_mask = (k_norm <= k_star).unsqueeze(0)
-        u_hat_compressed = u_hat * galerkin_mask
-        return torch.fft.ifftn(u_hat_compressed, dim=(-3, -2, -1), norm="ortho").real
-
-    def execute_spectral_step(self, u_field: torch.Tensor) -> torch.Tensor:
-        k_norm = self.k_norm.to(u_field.device)
-        viscous_decay = torch.exp(-self.nu * (k_norm**2) * self.dt).unsqueeze(0)
-        u_hat = torch.fft.fftn(u_field, dim=(-3, -2, -1), norm="ortho")
-        u_hat_next = u_hat * viscous_decay
-        return torch.fft.ifftn(u_hat_next, dim=(-3, -2, -1), norm="ortho").real
-
-    def apply_physical_forcing(self, u_field: torch.Tensor, k_force: float = 4.0) -> torch.Tensor:
-        k_norm = self.k_norm.to(u_field.device)
-        u_hat = torch.fft.fftn(u_field, dim=(-3, -2, -1), norm="ortho")
-        forcing_mask = (k_norm <= k_force).unsqueeze(0)
-        f_hat = torch.randn_like(u_hat) * 0.15 * forcing_mask
-        u_hat_forced = u_hat + f_hat * self.dt
-        return torch.fft.ifftn(u_hat_forced, dim=(-3, -2, -1), norm="ortho").real
-
-    def spawn_simulation_stream(self, initial_fields: Tuple[int, torch.Tensor]) -> Iterator[Any]:
-        timesteps, u = initial_fields
-        t = 0
-        while t < timesteps:
-            C_ratio, k_star, bifurcated, euler_singular = self.evaluate_spectral_bounds(u)
-            
-            if euler_singular:
-                yield {
-                    "TERMINATE_FOR_HARDWARE_PROTECTION": True,
-                    "reason": "Inviscid Euler point (nu = 0.0) detected. Parabolic-Hyperbolic breakdown imminent.",
-                    "last_stable_fields": u
-                }
-                return
-
-            if bifurcated:
-                yield {
-                    "TERMINATE_FOR_HARDWARE_PROTECTION": True,
-                    "reason": f"Sobolev bifurcation (s_c = 5/2) breached. C-Ratio {C_ratio:.4f} >= C_crit ({self.C_crit:.4f}).",
-                    "last_stable_fields": u
-                }
-                return
-            
-            u_compressed = self.apply_galerkin_projection(u, k_star)
-            u_next = self.execute_spectral_step(u_compressed)
-            u = self.apply_physical_forcing(u_next, k_force=3.5)
-            
-            t += 1
-            yield {"step": t, "k_star": k_star, "C_ratio": C_ratio, "field": u}
-
-if __name__ == "__main__":
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    sample_u = torch.randn(3, 64, 64, 64, device=device) * 0.03
-    engine = IntegratedNavierStokesCompleteEngine(nu=0.003, grid_size=64, dt=0.002).to(device)
-    
-    final_output = hylo_generator_core_with_guard(engine.spawn_simulation_stream, (100, sample_u))
+# Terminal 2: Stream your local physical simulation data packets
+python client.py
 ```
 
----
+## ⚖️ Dual-Licensing Framework & Commercial Options
+This project is strictly licensed under the **GNU Affero General Public License v3 (AGPL-3)**.
 
-## ⚖️ Commercial Licensing & Legal Architecture
+### The AGPL-3 Obligation:
+If you modify this engine, integrate its spectral layers, or run it on a server to offer cloud simulations, network pipelines, or SaaS API solutions, **you are legally forced to open-source your entire backend infrastructure under the AGPL-3.**
 
-FluxStream is dually licensed to protect our intellectual property while fostering academic collaboration. 
+### Commercial Commercial Enterprise Exemption:
+If you intend to deploy this physics guard within a closed-source, proprietary corporate system or industrial AI pipeline without exposing your own intellectual property, you must bypass the AGPL-3 via a commercial dual-license contract.
 
-### 1. Open-Source Track (GNU AGPL v3)
-For open-source projects, researchers, and hobbyists, the engine is completely free under the **GNU Affero General Public License v3**. 
+📩 **For commercial closed-source licensing, enterprise SLAs, or dedicated technical inquiries, contact the logic system directly via email:**
+`mad.white.g@gmail.com`
 
-**⚠️ ATTENTION COMPLIANCE TEAMS / CORPORATE COUNSEL:** 
-The AGPL-v3 license contains a strict **Network Copyleft Clause**. If you modify, extend, or embed FluxStream in *any* software, internal tool, infrastructure pipeline, or SaaS platform that interacts with users over a network (e.g., APIs, Cloud Backends, Enterprise Microservices), **you are legally mandated to publish your entire surrounding proprietary source code under the AGPL-v3.**
-
-### 2. Commercial Track (Enterprise License)
-For entities embedding FluxStream into closed-source commercial architectures, enterprise cloud pipelines, or SaaS applications without exposing their private codebase, a commercial license is strictly required.
-
-*   **Pricing:** **€95,000 / Year (Corporate Flat-Rate)**
-*   **Privileges:** Complete relief from AGPL-v3 copyleft provisions, unlimited internal enterprise usage, full IP Indemnification against patent/copyright claims, and mission-critical SLA Support (4-hour response time for critical system blocks).
-
-To acquire a commercial license or to clear compliance before deployment, contact our procurement desk at: `mad.white.g@gmail.com`.
