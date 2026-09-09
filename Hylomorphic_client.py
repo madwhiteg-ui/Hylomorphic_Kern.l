@@ -197,3 +197,6 @@ if __name__ == "__main__":
     # Start des kommerziellen Endpunkts
     gateway = CommercialPhysicsGatewayServer(host="127.0.0.1", port=8765)
     gateway.start_server()
+=======
+    gateway.start_server()
+>>>>>>> 74c595648cfcb8b9bcc6c8b44f4549e0c87ff91f
